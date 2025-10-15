@@ -17,6 +17,7 @@ interface Post {
   image_url: string | null;
   read_time: string;
   created_at: string;
+  view_count: number;
 }
 
 const Index = () => {
@@ -58,6 +59,7 @@ const Index = () => {
     date: new Date(post.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
     readTime: post.read_time,
     image: post.image_url || heroImage,
+    viewCount: post.view_count,
   }));
 
   return (

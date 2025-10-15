@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import Navigation from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Calendar, Clock, User } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, User, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import heroImage from "@/assets/hero-blog.jpg";
@@ -18,6 +18,7 @@ interface Post {
   image_url: string | null;
   read_time: string;
   created_at: string;
+  view_count: number;
 }
 
 const BlogPost = () => {
@@ -25,10 +26,61 @@ const BlogPost = () => {
   const navigate = useNavigate();
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
+  const [viewCount, setViewCount] = useState<number>(0);
 
   useEffect(() => {
     fetchPost();
   }, [id]);
+
+  useEffect(() => {
+    if (post?.id) {
+      trackView(post.id);
+    }
+  }, [post?.id]);
+
+  const trackView = async (postId: string) => {
+    try {
+      // Generate a viewer ID from localStorage or create a new one
+      let viewerId = localStorage.getItem('blog-viewer-id');
+      if (!viewerId) {
+        viewerId = crypto.randomUUID();
+        localStorage.setItem('blog-viewer-id', viewerId);
+      }
+
+      // Check if we've already viewed this post recently
+      const lastViewed = localStorage.getItem(`blog-view-${postId}`);
+      const now = Date.now();
+      const oneDay = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
+      if (lastViewed && (now - parseInt(lastViewed)) < oneDay) {
+        // Already viewed recently, don't track again
+        return;
+      }
+
+      const response = await fetch('/.netlify/functions/track-view', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          postId,
+          viewerId
+        })
+      });
+
+      if (response.ok) {
+        const { viewCount: newViewCount, alreadyViewed } = await response.json();
+        setViewCount(newViewCount);
+        
+        if (!alreadyViewed) {
+          // Store the view timestamp
+          localStorage.setItem(`blog-view-${postId}`, now.toString());
+        }
+      }
+    } catch (error) {
+      console.error('Failed to track view:', error);
+    }
+  };
 
   const fetchPost = async () => {
     if (!id) return;
@@ -41,7 +93,10 @@ const BlogPost = () => {
         .maybeSingle();
 
       if (error) throw error;
-      setPost(data);
+      if (data) {
+        setPost(data);
+        setViewCount(data.view_count || 0);
+      }
     } catch (error: any) {
       toast.error("Failed to load post");
     } finally {
@@ -114,6 +169,10 @@ const BlogPost = () => {
               <span className="flex items-center gap-2">
                 <Clock className="h-4 w-4" />
                 {post.read_time}
+              </span>
+              <span className="flex items-center gap-2">
+                <Eye className="h-4 w-4" />
+                {viewCount.toLocaleString()} views
               </span>
             </div>
             

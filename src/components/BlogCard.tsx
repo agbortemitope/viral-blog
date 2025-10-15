@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock } from "lucide-react";
+import { Calendar, Clock, Eye } from "lucide-react";
 
 interface BlogCardProps {
   id: string;
@@ -11,9 +11,10 @@ interface BlogCardProps {
   date: string;
   readTime: string;
   image: string;
+  viewCount?: number;
 }
 
-const BlogCard = ({ id, title, excerpt, category, date, readTime, image }: BlogCardProps) => {
+const BlogCard = ({ id, title, excerpt, category, date, readTime, image, viewCount }: BlogCardProps) => {
   return (
     <Link to={`/post/${id}`} className="group">
       <Card className="overflow-hidden h-full transition-all duration-300 hover:shadow-[var(--shadow-hover)] border-border/50">
@@ -40,7 +41,7 @@ const BlogCard = ({ id, title, excerpt, category, date, readTime, image }: BlogC
           </p>
         </CardContent>
         <CardFooter className="text-sm text-muted-foreground">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-wrap">
             <span className="flex items-center gap-1">
               <Calendar className="h-4 w-4" />
               {date}
@@ -49,6 +50,12 @@ const BlogCard = ({ id, title, excerpt, category, date, readTime, image }: BlogC
               <Clock className="h-4 w-4" />
               {readTime}
             </span>
+            {viewCount !== undefined && (
+              <span className="flex items-center gap-1">
+                <Eye className="h-4 w-4" />
+                {viewCount.toLocaleString()}
+              </span>
+            )}
           </div>
         </CardFooter>
       </Card>
