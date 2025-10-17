@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import Navigation from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
@@ -20,10 +20,12 @@ const postSchema = z.object({
   imageUrl: z.string().url("Please enter a valid URL").optional().or(z.literal("")),
 });
 
-const CreatePost = () => {
+const EditPost = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
   const [title, setTitle] = useState("");
   const [excerpt, setExcerpt] = useState("");
   const [content, setContent] = useState("");
@@ -34,10 +36,50 @@ const CreatePost = () => {
 
   useEffect(() => {
     if (!user) {
-      toast.error("Please sign in to create a post");
+      toast.error("Please sign in to edit posts");
       navigate("/auth");
+      return;
     }
-  }, [user, navigate]);
+    
+    fetchPost();
+  }, [user, id]);
+
+  const fetchPost = async () => {
+    if (!id) return;
+
+    try {
+      const { data, error } = await supabase
+        .from("posts")
+        .select("*")
+        .eq("id", id)
+        .maybeSingle();
+
+      if (error) throw error;
+      
+      if (!data) {
+        toast.error("Post not found");
+        navigate("/");
+        return;
+      }
+
+      if (user && data.author_id !== user.id) {
+        toast.error("You can only edit your own posts");
+        navigate("/");
+        return;
+      }
+
+      setTitle(data.title);
+      setExcerpt(data.excerpt);
+      setContent(data.content);
+      setCategory(data.category);
+      setImageUrl(data.image_url || "");
+    } catch (error: any) {
+      toast.error("Failed to load post");
+      navigate("/");
+    } finally {
+      setFetching(false);
+    }
+  };
 
   const calculateReadTime = (text: string): string => {
     const wordsPerMinute = 200;
@@ -83,7 +125,7 @@ const CreatePost = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    if (!user || !id) return;
 
     setLoading(true);
 
@@ -96,40 +138,43 @@ const CreatePost = () => {
         imageUrl: imageUrl || undefined,
       });
 
-      // Get user profile for display name
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("display_name")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      const { error } = await supabase.from("posts").insert({
-        title: validatedData.title,
-        excerpt: validatedData.excerpt,
-        content: validatedData.content,
-        category: validatedData.category,
-        image_url: validatedData.imageUrl || null,
-        author_id: user.id,
-        author_name: profile?.display_name || user.email?.split("@")[0] || "Anonymous",
-        read_time: calculateReadTime(validatedData.content),
-      });
+      const { error } = await supabase
+        .from("posts")
+        .update({
+          title: validatedData.title,
+          excerpt: validatedData.excerpt,
+          content: validatedData.content,
+          category: validatedData.category,
+          image_url: validatedData.imageUrl || null,
+          read_time: calculateReadTime(validatedData.content),
+        })
+        .eq("id", id);
 
       if (error) throw error;
 
-      toast.success("Post created successfully!");
-      navigate("/");
+      toast.success("Post updated successfully!");
+      navigate(`/post/${id}`);
     } catch (error: any) {
       if (error instanceof z.ZodError) {
         toast.error(error.errors[0].message);
       } else {
-        toast.error(error.message || "Failed to create post");
+        toast.error(error.message || "Failed to update post");
       }
     } finally {
       setLoading(false);
     }
   };
 
-  if (!user) return null;
+  if (!user || fetching) {
+    return (
+      <div className="min-h-screen">
+        <Navigation />
+        <div className="container mx-auto px-4 py-24 text-center">
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">
@@ -138,17 +183,17 @@ const CreatePost = () => {
       <div className="container mx-auto px-4 py-12 max-w-4xl">
         <Button
           variant="ghost"
-          onClick={() => navigate("/")}
+          onClick={() => navigate(`/post/${id}`)}
           className="mb-8"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Blog
+          Back to Post
         </Button>
 
         <div className="space-y-6">
           <div>
-            <h1 className="text-4xl font-display font-bold mb-2">Create New Post</h1>
-            <p className="text-muted-foreground">Share your thoughts with the world</p>
+            <h1 className="text-4xl font-display font-bold mb-2">Edit Post</h1>
+            <p className="text-muted-foreground">Update your blog post</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -265,12 +310,12 @@ const CreatePost = () => {
 
             <div className="flex gap-4">
               <Button type="submit" disabled={loading} className="flex-1">
-                {loading ? "Publishing..." : "Publish Post"}
+                {loading ? "Updating..." : "Update Post"}
               </Button>
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => navigate("/")}
+                onClick={() => navigate(`/post/${id}`)}
                 disabled={loading}
               >
                 Cancel
@@ -283,4 +328,4 @@ const CreatePost = () => {
   );
 };
 
-export default CreatePost;
+export default EditPost;

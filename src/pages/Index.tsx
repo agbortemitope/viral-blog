@@ -67,26 +67,26 @@ const Index = () => {
       {/* Hero Section */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-accent/5" />
-        <div className="container mx-auto px-4 py-24 relative">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-6">
+        <div className="container mx-auto px-4 py-12 sm:py-16 md:py-24 relative">
+          <div className="grid lg:grid-cols-2 gap-8 md:gap-12 items-center">
+            <div className="space-y-4 sm:space-y-6">
               <div className="inline-block px-4 py-2 bg-primary/10 rounded-full">
-                <span className="text-sm font-medium text-primary">Welcome to Viral</span>
+                <span className="text-xs sm:text-sm font-medium text-primary">Welcome to Viral</span>
               </div>
-              <h1 className="text-5xl lg:text-6xl font-display font-bold leading-tight">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-display font-bold leading-tight">
                 Share Ideas That Go Viral
               </h1>
-              <p className="text-xl text-muted-foreground">
+              <p className="text-base sm:text-lg md:text-xl text-muted-foreground">
                 A platform for creators to share their stories, insights, and ideas with the world.
               </p>
               <Link to="/create">
-                <Button size="lg" className="group">
+                <Button size="lg" className="group w-full sm:w-auto">
                   Start Writing
                   <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Button>
               </Link>
             </div>
-            <div className="relative">
+            <div className="relative mt-8 lg:mt-0">
               <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 rounded-2xl blur-3xl" />
               <img 
                 src={heroImage} 
@@ -100,14 +100,15 @@ const Index = () => {
 
       {/* Category Filter */}
       <section className="border-b bg-muted/30">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex gap-2 overflow-x-auto">
+        <div className="container mx-auto px-4 py-4 sm:py-6">
+          <div className="flex gap-2 overflow-x-auto pb-2 sm:pb-0 scrollbar-hide">
             {categories.map(category => (
               <Button
                 key={category}
                 variant={selectedCategory === category ? "default" : "ghost"}
                 onClick={() => setSelectedCategory(category)}
-                className="whitespace-nowrap"
+                className="whitespace-nowrap flex-shrink-0 text-sm"
+                size="sm"
               >
                 {category}
               </Button>
@@ -117,7 +118,7 @@ const Index = () => {
       </section>
 
       {/* Blog Grid */}
-      <section className="py-16">
+      <section className="py-8 sm:py-12 md:py-16">
         <div className="container mx-auto px-4">
           {loading ? (
             <div className="text-center py-12">
@@ -131,7 +132,7 @@ const Index = () => {
               </Link>
             </div>
           ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
               {postsWithFormattedData.map(post => (
                 <BlogCard key={post.id} {...post} />
               ))}
@@ -141,13 +142,13 @@ const Index = () => {
       </section>
 
       {/* Footer */}
-      <footer className="border-t py-12 mt-16">
+      <footer className="border-t py-8 sm:py-12 mt-12 sm:mt-16">
         <div className="container mx-auto px-4">
-          <div className="text-center space-y-4">
-            <p className="text-muted-foreground">
+          <div className="text-center space-y-3 sm:space-y-4">
+            <p className="text-sm sm:text-base text-muted-foreground">
               © 2024 Viral. All rights reserved.
             </p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs sm:text-sm text-muted-foreground">
               Made with passion for writing and technology
             </p>
           </div>
